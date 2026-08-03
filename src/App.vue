@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import ChapterCard from "./components/ChapterCard.vue";
 
 const chapters = ref([]);
@@ -11,6 +11,7 @@ const adding = ref(false);
 const filter = ref("all"); // all | pending | done
 const draggedChapterId = ref(null);
 const dragOverChapterId = ref(null);
+const chapterSaveTimers = new Map();
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 const api = (path) => `${API_BASE}${path}`;
@@ -34,6 +35,11 @@ async function loadAll() {
 }
 
 onMounted(loadAll);
+
+onBeforeUnmount(() => {
+  chapterSaveTimers.forEach((timer) => clearTimeout(timer));
+  chapterSaveTimers.clear();
+});
 
 const totalCompleted = computed(() =>
   chapters.value.reduce((sum, c) => sum + c.completedCount, 0)
@@ -78,32 +84,37 @@ async function addChapter() {
   }
 }
 
-async function updateCount(chapter, delta) {
-  const next = Math.max(0, chapter.completedCount + delta);
-  chapter.completedCount = next;
-  try {
-    await fetch(api("/api/chapters"), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: chapter.id, completedCount: next }),
-    });
-  } catch (e) {
-    errorMsg.value = "Could not save your progress.";
-  }
+function scheduleChapterSave(chapter, completedCount) {
+  const chapterId = chapter.id;
+  const existingTimer = chapterSaveTimers.get(chapterId);
+  if (existingTimer) clearTimeout(existingTimer);
+
+  const timer = setTimeout(async () => {
+    chapterSaveTimers.delete(chapterId);
+    try {
+      await fetch(api("/api/chapters"), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: chapterId, completedCount }),
+      });
+    } catch (e) {
+      errorMsg.value = "Could not save your progress.";
+    }
+  }, 300);
+
+  chapterSaveTimers.set(chapterId, timer);
 }
 
-async function setCount(chapter, value) {
+function updateCount(chapter, delta) {
+  const next = Math.max(0, chapter.completedCount + delta);
+  chapter.completedCount = next;
+  scheduleChapterSave(chapter, next);
+}
+
+function setCount(chapter, value) {
   const next = Math.max(0, Number(value) || 0);
   chapter.completedCount = next;
-  try {
-    await fetch(api("/api/chapters"), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: chapter.id, completedCount: next }),
-    });
-  } catch (e) {
-    errorMsg.value = "Could not save your progress.";
-  }
+  scheduleChapterSave(chapter, next);
 }
 
 async function deleteChapter(chapter) {
