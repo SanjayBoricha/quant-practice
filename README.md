@@ -20,6 +20,20 @@ A single-page app for tracking how many questions you've completed in each math 
 - **Database:** [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/) ORM
 - **Deployment:** Frontend to [GitHub Pages](https://pages.github.com/) + Backend to any Node.js host
 
+## 🚀 Quick Deploy to Render
+
+```bash
+npm run deploy:render
+```
+
+This interactive script will guide you through:
+- Setting up GitHub repository
+- Configuring Render deployment
+- Setting environment variables
+- Deploying to GitHub Pages
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Setup
 
 ### 1. Install dependencies and configure environment

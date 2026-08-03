@@ -9,7 +9,9 @@
     "server:dev": "node --watch server.js",
     "build": "vite build",
     "preview": "vite preview",
-    "server:start": "node server.js"
+    "server:start": "node server.js",
+    "deploy:render": "node scripts/deploy-to-render.js",
+    "deploy:check": "git status && git log -1 --oneline"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
