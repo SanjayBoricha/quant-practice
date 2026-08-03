@@ -21,12 +21,20 @@ const emit = defineEmits([
 const showHard = ref(false);
 const newQNumber = ref("");
 const newQNote = ref("");
+let submitCountTimeout = null;
 
 const pendingHard = computed(() => props.hardQuestions.filter((h) => !h.resolved));
 const resolvedHard = computed(() => props.hardQuestions.filter((h) => h.resolved));
 
 function submitCount(e) {
-  emit("set-count", e.target.value);
+  const value = e.target.value;
+  if (submitCountTimeout) {
+    clearTimeout(submitCountTimeout);
+  }
+  submitCountTimeout = window.setTimeout(() => {
+    emit("set-count", value);
+    submitCountTimeout = null;
+  }, 250);
 }
 
 function submitHardQuestion() {
